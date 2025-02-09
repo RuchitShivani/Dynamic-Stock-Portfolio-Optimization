@@ -1,0 +1,131 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#define MAX_STOCKS 100
+// Structure to represent a stock
+typedef struct {
+    char name[20];
+    double expected_return;
+    double risk;
+    double weight;  // Proportion of investment in the portfolio
+    double transaction_cost;  // Transaction cost for buying/selling the stock
+} Stock;
+// Function to input stock data
+void inputStockData(Stock stocks[], int numStocks) {
+    for (int i = 0; i < numStocks; i++) {
+        printf("Enter the name of Stock %d: ", i + 1);
+        scanf("%s", stocks[i].name);
+        printf("Enter the expected return for %s: ", stocks[i].name);
+        scanf("%lf", &stocks[i].expected_return);
+        printf("Enter the risk (standard deviation) for %s: ", stocks[i].name);
+        scanf("%lf", &stocks[i].risk);
+        stocks[i].weight = 0.0; // Initialize the weight to 0
+        stocks[i].transaction_cost = 0.0; // Initialize the transaction cost to 0
+    }
+}
+// Function to find the optimal portfolio
+void optimizePortfolio(Stock stocks[], int numStocks, double totalInvestment, double maxRisk) {
+    // Create a 2D array to store the best portfolio for each subproblem
+    double **dp = (double **)malloc((numStocks + 1) * sizeof(double *));
+    for (int i = 0; i <= numStocks; i++) {
+        dp[i] = (double *)malloc((int)(totalInvestment + 1) * sizeof(double));
+    }
+    for (int i = 0; i <= numStocks; i++) {
+        for (int j = 0; j <= (int)totalInvestment; j++) {
+            if (i == 0 || j == 0) {
+                dp[i][j] = 0.0;
+            } else if (stocks[i - 1].risk <= maxRisk) {
+                // Calculate the expected return of the portfolio with stock i
+                double withStock = stocks[i - 1].expected_return + dp[i - 1][j - 1];
+                // Calculate the expected return of the portfolio without stock i
+                double withoutStock = dp[i - 1][j];
+                dp[i][j] = fmax(withStock, withoutStock);
+            } else {
+                dp[i][j] = dp[i - 1][j];
+            }
+        }
+    }
+    // Find the stocks in the optimal portfolio and update their weights
+    int i = numStocks, j = (int)totalInvestment;
+    while (i > 0 && j > 0) {
+        if (dp[i][j] != dp[i - 1][j]) {
+            printf("Invest in %s\n", stocks[i - 1].name);
+            stocks[i - 1].weight = 1.0; // Fully invest in the stock
+            j -= 1;
+        }
+        i -= 1;
+    }
+    // Free the dynamically allocated memory
+    for (int i = 0; i <= numStocks; i++) {
+        free(dp[i]);
+    }
+    free(dp);
+}
+// Function to calculate portfolio metrics
+void calculatePortfolioMetrics(Stock stocks[], int numStocks, double totalInvestment) {
+    double portfolio_return = 0.0;
+    double portfolio_risk = 0.0;
+    double transaction_cost = 0.0;
+    for (int i = 0; i < numStocks; i++) {
+        portfolio_return += stocks[i].weight * stocks[i].expected_return;
+        portfolio_risk += pow(stocks[i].weight * stocks[i].risk, 2);
+        transaction_cost += stocks[i].weight * stocks[i].transaction_cost;
+    }
+    portfolio_risk = sqrt(portfolio_risk);
+    printf("\nPortfolio Metrics:\n");
+    printf("Expected Portfolio Return: %.2f%%\n", portfolio_return * 100);
+    printf("Portfolio Risk (Standard Deviation): %.2f%%\n", portfolio_risk * 100);
+    printf("Transaction Costs: $%.2f\n", transaction_cost);
+}
+// Function to modify the portfolio
+void modifyPortfolio(Stock stocks[], int numStocks, double totalInvestment) {
+    printf("\nModify the portfolio:\n");
+    printf("Enter the stock number to change the investment (1 to %d), or 0 to finish: ", numStocks);
+    int stockNum;
+    scanf("%d", &stockNum);
+    if (stockNum < 0 || stockNum > numStocks) {
+        printf("Invalid stock number.\n");
+        return;
+    }
+    if (stockNum == 0) {
+        return;  // Finish modifying the portfolio
+    }
+    stockNum--;  // Convert to array index
+    printf("Enter the new investment amount for %s: ", stocks[stockNum].name);
+    double newInvestment;
+    scanf("%lf", &newInvestment);
+    // Calculate the updated weight for the stock
+    stocks[stockNum].weight = newInvestment / totalInvestment;
+    printf("Updated investment for %s: %.2f%%\n", stocks[stockNum].name, stocks[stockNum].weight * 100);
+}
+int main() {
+    int numStocks;
+    printf("Enter the number of stocks in your portfolio: ");
+    scanf("%d", &numStocks);
+    if (numStocks > MAX_STOCKS) {
+        printf("Number of stocks exceeds the maximum allowed.\n");
+        return 1;
+    }
+    Stock stocks[MAX_STOCKS];
+    printf("Input stock data:\n");
+    inputStockData(stocks, numStocks);
+    double totalInvestment;
+    double maxRisk;
+    printf("Enter your total investment: ");
+    scanf("%lf", &totalInvestment);
+    printf("Enter your maximum acceptable risk (as a decimal): ");
+    scanf("%lf", &maxRisk);
+    printf("Optimal Portfolio:\n");
+    optimizePortfolio(stocks, numStocks, totalInvestment, maxRisk);
+    // Calculate and display portfolio metrics
+    calculatePortfolioMetrics(stocks, numStocks, totalInvestment);
+    // Modify the portfolio
+    modifyPortfolio(stocks, numStocks, totalInvestment);
+    // Calculate and display portfolio metrics after modification
+    calculatePortfolioMetrics(stocks, numStocks, totalInvestment);
+    // Print the portfolio with stock weights
+    printf("\nOptimal Portfolio with Weights:\n");
+    for (int i = 0; i < numStocks; i++) {
+        if (stocks[i].weight > 0.0) {
+            printf("Invest %.2f%% in %s\n", stocks[i].weight * 100, stocks[i].name); } 
+    return 0; }
