@@ -1,0 +1,48 @@
+function optimizePortfolio(stocks, numStocks, totalInvestment, maxRisk)
+    // Create a 2D array to store optimal portfolio values
+    dp[numStocks + 1][totalInvestment + 1]    
+    // Initialize dp array
+    for i from 0 to numStocks
+        for j from 0 to totalInvestment
+            if i is 0 or j is 0
+                dp[i][j] = 0.0
+            else if stocks[i - 1].risk > maxRisk
+                dp[i][j] = dp[i - 1][j]
+            else
+                withStock = stocks[i - 1].expected_return + dp[i - 1][j - 1]
+                withoutStock = dp[i - 1][j]
+                dp[i][j] = max(withStock, withoutStock)
+    // Create weights array to store stock allocation
+    weights[numStocks]
+    // Initialize i and j for tracking the optimal portfolio
+    i = numStocks
+    j = totalInvestment 
+    // Find the stocks in the optimal portfolio
+    while i > 0 and j > 0
+        if dp[i][j] is not equal to dp[i - 1][j]
+            print "Invest in " + stocks[i - 1].name
+            stocks[i - 1].weight = 1.0 // Fully invest in the stock
+            j = j - 1
+        i = i - 1
+    // Calculate portfolio metrics
+    portfolio_return = 0.0
+    portfolio_risk = 0.0
+    transaction_cost = 0.0
+    for i from 0 to numStocks
+        portfolio_return = portfolio_return + stocks[i].weight * stocks[i].expected_return
+        portfolio_risk = portfolio_risk + (stocks[i].weight * stocks[i].risk)^2
+        transaction_cost = transaction_cost + stocks[i].weight * stocks[i].transaction_cost
+    portfolio_risk = square_root(portfolio_risk)
+    print "Portfolio Metrics:"
+    print "Expected Portfolio Return: " + (portfolio_return * 100) + "%"
+    print "Portfolio Risk (Standard Deviation): " + (portfolio_risk * 100) + "%"
+    print "Transaction Costs: $" + transaction_cost
+    // Provide the option to modify the portfolio
+    modifyPortfolio(stocks, numStocks, totalInvestment)
+    // Calculate and display portfolio metrics after modification
+    calculatePortfolioMetrics(stocks, numStocks, totalInvestment)
+    // Print the optimal portfolio with stock weights
+    print "\nOptimal Portfolio with Weights:"
+    for i from 0 to numStocks
+        if stocks[i].weight > 0.0
+            print "Invest " + (stocks[i].weight * 100) + "% in " + stocks[i].name
